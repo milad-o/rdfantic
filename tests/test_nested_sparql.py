@@ -30,6 +30,14 @@ class SelfRefView(GraphModel):
     next_node: SelfRefView | None = predicate(SCHEMA["next"])
 
 
+class SharedNameView(GraphModel):
+    """Parent and child both have a field named 'name'."""
+
+    rdf_type = SCHEMA["Movie"]
+    name: str = predicate(SCHEMA["name"])
+    director: InnerView = predicate(SCHEMA["director"])
+
+
 class TestNestedSparqlConstruct:
     def test_construct_includes_nested_fields(self) -> None:
         """CONSTRUCT query includes patterns for the nested model's fields."""
@@ -44,3 +52,17 @@ class TestNestedSparqlConstruct:
         query = SelfRefView.sparql_construct()
         assert "?next_node" in query
         assert SCHEMA["Node"] in query
+
+    def test_nested_field_variables_are_scoped(self) -> None:
+        """Shared field names across parent/child get distinct SPARQL variables."""
+        query = SharedNameView.sparql_construct()
+        # Parent's name → ?name, child's name → ?director_name
+        assert "?name" in query
+        assert "?director_name" in query
+        # ?name should NOT appear as the director's object (that would be a collision)
+        lines = query.splitlines()
+        director_name_lines = [
+            ln for ln in lines if "?director" in ln and "schema/name" in ln
+        ]
+        for ln in director_name_lines:
+            assert "?director_name" in ln

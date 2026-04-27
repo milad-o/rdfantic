@@ -72,6 +72,7 @@ def _collect_patterns(
     optional_patterns: list[str],
     *,
     _visited: set[type],
+    _var_prefix: str = "",
 ) -> None:
     """Collect SPARQL patterns for a model, recursing into nested GraphModels."""
     from rdfantic.model import GraphModel
@@ -99,7 +100,7 @@ def _collect_patterns(
         is_nested = isinstance(inner_type, type) and issubclass(inner_type, GraphModel)
 
         pred_uri = _sparql_uri(pred)
-        var = f"?{field_name}"
+        var = f"?{_var_prefix}{field_name}"
         pattern = f"  {s} {pred_uri} {var} ."
 
         construct_patterns.append(pattern)
@@ -117,6 +118,7 @@ def _collect_patterns(
                 required_patterns,
                 optional_patterns,
                 _visited=_visited,
+                _var_prefix=f"{_var_prefix}{field_name}_",
             )
 
 

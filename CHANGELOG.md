@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.4] — 2026-04-27
+
+### Fixed
+
+- SPARQL CONSTRUCT variable name collision — nested models sharing a field name (e.g. parent and child both having `name`) now produce scoped variables (`?director_name` instead of `?name`), preventing silent incorrect join constraints
+
 ## [0.2.3] — 2026-04-27
 
 ### Added
