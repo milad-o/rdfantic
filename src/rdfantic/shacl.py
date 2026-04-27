@@ -20,17 +20,34 @@ def model_to_shacl(
     Constraints are derived from type hints by default and can be overridden
     or extended with ``Annotated[..., SHConstraint(...)]``.
 
+    Recursively generates shapes for nested GraphModel fields.
+
     Args:
         model_cls: A GraphModel subclass.
-        shape_uri: Optional URI for the shape node.
+        shape_uri: Optional URI for the top-level shape node.
 
     Returns:
-        An rdflib Graph containing the SHACL shape.
+        An rdflib Graph containing all SHACL shapes.
     """
-    from rdfantic.model import GraphModel
-
     g = Graph()
     g.bind("sh", SH)
+    _build_shape(model_cls, g, shape_uri=shape_uri, _visited=set())
+    return g
+
+
+def _build_shape(
+    model_cls: type,
+    g: Graph,
+    *,
+    shape_uri: URIRef | None = None,
+    _visited: set[type],
+) -> None:
+    """Build a single SHACL NodeShape and recurse into nested models."""
+    from rdfantic.model import GraphModel
+
+    if model_cls in _visited:
+        return
+    _visited.add(model_cls)
 
     shape = shape_uri or BNode()
     g.add((shape, RDF.type, SH.NodeShape))
@@ -75,6 +92,8 @@ def model_to_shacl(
             nested_rdf_type = getattr(inner_type, "rdf_type", None)
             if nested_rdf_type is not None:
                 g.add((prop, SH["class"], nested_rdf_type))
+            # Recursively generate shape for the nested model
+            _build_shape(inner_type, g, _visited=_visited)
         else:
             xsd = python_type_to_xsd(inner_type)
             if xsd is not None:
@@ -109,8 +128,6 @@ def model_to_shacl(
                     g.add((prop, extra_pred, extra_val))
                 else:
                     g.add((prop, extra_pred, Literal(extra_val)))
-
-    return g
 
 
 def _add_int(g: Graph, subject: BNode, pred: URIRef, value: int) -> None:

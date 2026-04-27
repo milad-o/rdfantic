@@ -73,6 +73,27 @@ The suite is split by capability — each file targets a specific claim or behav
 | `test_multi_view.py` | 9 | 3+ views projecting different slices of the same node with interleaved read/write |
 | `test_benchmark.py` | 3 | 1k-node read, write, and round-trip — baseline performance, not pass/fail |
 
+### Edge cases
+
+| File | Tests | What it covers |
+|---|---|---|
+| `test_language_tags.py` | 6 | Language-tagged literals — str loses tag, LangStr preserves it |
+| `test_xsd_mappings.py` | 6 | `date`, `datetime`, `Decimal` — correct XSD datatypes emitted |
+| `test_uriref_fields.py` | 3 | `URIRef`-typed fields — read preserves type, write produces URIRef |
+| `test_union_types.py` | 2 | Non-optional unions (`str \| int`) — `unwrap_type` behavior |
+| `test_nested_sparql.py` | 2 | SPARQL CONSTRUCT recurses into nested model fields |
+| `test_scalar_ambiguity.py` | 3 | Multiple objects for scalar field; duplicate predicate mappings |
+| `test_merge_nested.py` | 3 | Merge orphans nested triples; BNode ID drift; Literal for nested field |
+| `test_sparql_injection.py` | 5 | Illegal SPARQL IRI characters rejected with ValueError |
+| `test_shacl_recursion.py` | 2 | SHACL generation recurses into nested models |
+| `test_json_round_trip.py` | 2 | `model_dump` excludes subject; dump→validate loses it |
+| `test_pagination_mixed.py` | 1 | `paginate()` with mixed URIRef and BNode subjects |
+| `test_deep_nesting.py` | 2 | 50-level chain with depth limit; 200-level unlimited |
+| `test_special_values.py` | 5 | NaN/Infinity round-trip; empty string as valid value |
+| `test_inheritance.py` | 3 | Subclass inherits parent fields; `rdf_type` override; read/write |
+| `test_forward_refs.py` | 1 | Self-referencing forward ref resolution |
+| `test_boolean_coercion.py` | 5 | Typed true/false, `"true"`/`"1"` xsd:boolean, untyped literal |
+
 ## Conventions
 
 - Each test file has a module docstring explaining what it proves.

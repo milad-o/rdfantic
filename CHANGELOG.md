@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.3] — 2026-04-27
+
+### Added
+
+- `LangStr` type — string subclass that preserves BCP 47 language tags through read → write round-trips
+- Recursive SPARQL CONSTRUCT — `model_to_construct` now includes triple patterns for nested `GraphModel` fields
+- Recursive SHACL generation — `model_to_shacl` now generates NodeShapes for nested `GraphModel` fields
+- Cycle detection for both SPARQL and SHACL generation (prevents infinite recursion on self-referencing models)
+- Edge-case test suite — 16 new test files covering language tags, XSD mappings, URIRef fields, union types, nested SPARQL, scalar ambiguity, merge orphans, SPARQL injection, SHACL recursion, JSON round-trip, mixed pagination, deep nesting, special floats, inheritance, forward refs, boolean coercion
+- `date`, `datetime`, `time`, `Decimal` added to `_PYTHON_TO_XSD` type mappings
+- SPARQL URI sanitization — `_sparql_uri` rejects URIs with illegal IRI characters
+
+### Fixed
+
+- `rdf_value_to_python` now preserves `URIRef` when the target field type is `URIRef` instead of converting to `str`
+
 ## [0.2.1] — 2026-04-27
 
 ### Changed

@@ -4,10 +4,34 @@ from __future__ import annotations
 
 import types
 import typing
+from datetime import date, datetime, time
+from decimal import Decimal
 from typing import Any, Union, get_args, get_origin
 
 from rdflib import XSD, Literal, URIRef
 from rdflib.term import Node
+
+
+class LangStr(str):
+    """A string with an optional language tag.
+
+    Behaves exactly like ``str`` for all normal operations. The ``.language``
+    attribute carries the BCP 47 language tag (e.g. ``"en"``, ``"fr"``).
+
+    Use this as the field type when language-tagged literals must survive
+    a read → write round-trip::
+
+        class LabelView(GraphModel):
+            label: LangStr = predicate(SCHEMA["name"])
+    """
+
+    language: str | None
+
+    def __new__(cls, value: str = "", language: str | None = None) -> LangStr:
+        instance = super().__new__(cls, value)
+        instance.language = language
+        return instance
+
 
 # Python type → XSD datatype mapping
 _PYTHON_TO_XSD: dict[type, URIRef] = {
@@ -15,6 +39,10 @@ _PYTHON_TO_XSD: dict[type, URIRef] = {
     int: XSD.integer,
     float: XSD.double,
     bool: XSD.boolean,
+    Decimal: XSD.decimal,
+    date: XSD.date,
+    datetime: XSD.dateTime,
+    time: XSD.time,
 }
 
 
@@ -90,6 +118,7 @@ def python_value_to_rdf(
 
     For scalar types with known XSD mappings, produces a typed Literal.
     For URIRef values, returns them directly.
+    For LangStr values, produces a language-tagged Literal.
 
     Args:
         value: The Python value to convert.
@@ -98,6 +127,8 @@ def python_value_to_rdf(
     """
     if isinstance(value, URIRef):
         return value
+    if isinstance(value, LangStr) and value.language is not None:
+        return Literal(str(value), lang=value.language)
     if datatype is not None:
         return Literal(value, datatype=datatype)
     xsd_type = python_type_to_xsd(py_type)
@@ -109,13 +140,21 @@ def python_value_to_rdf(
 def rdf_value_to_python(node: Node, py_type: type) -> Any:
     """Convert an rdflib term to a Python value.
 
-    For Literals, uses rdflib's ``toPython()``.  For URIRefs, returns the
-    string URI.  BNodes are stringified to their identifier — this is
-    intentional for scalar fields; nested GraphModel fields are resolved
-    by ``from_graph`` before this function is called.
+    For Literals, uses rdflib's ``toPython()``.  When the target type is
+    ``LangStr``, preserves the language tag.  For URIRefs, returns the
+    URIRef directly when the target type is URIRef, otherwise the string URI.
+    BNodes are stringified to their identifier — this is intentional for
+    scalar fields; nested GraphModel fields are resolved by ``from_graph``
+    before this function is called.
     """
     if isinstance(node, Literal):
+        if py_type is LangStr or (
+            isinstance(py_type, type) and issubclass(py_type, LangStr)
+        ):
+            return LangStr(str(node), language=node.language)
         return node.toPython()
     if isinstance(node, URIRef):
+        if py_type is URIRef:
+            return node
         return str(node)
     return str(node)

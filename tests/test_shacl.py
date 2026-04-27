@@ -37,12 +37,12 @@ class TestSHACLGeneration:
     def test_shape_has_node_shape_type(self) -> None:
         g = MovieView.to_shacl()
         shapes = list(g.subjects(RDF.type, SH.NodeShape))
-        assert len(shapes) == 1
+        # MovieView + nested PersonView
+        assert len(shapes) == 2
 
     def test_target_class_set(self) -> None:
         g = MovieView.to_shacl()
-        shapes = list(g.subjects(RDF.type, SH.NodeShape))
-        targets = list(g.objects(shapes[0], SH.targetClass))
+        targets = set(g.objects(predicate=SH.targetClass))
         assert SCHEMA["Movie"] in targets
 
     def test_required_field_cardinality(self) -> None:

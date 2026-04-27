@@ -12,16 +12,15 @@ Base class for typed RDF graph views. Subclass this and declare fields with `pre
 |----------|------|-------------|
 | `rdf_type` | `ClassVar[URIRef \| None]` | The `rdf:type` for matching/writing nodes. Optional. |
 
-### Properties
+### Fields
 
 #### `subject`
 
 ```python
-@property
-def subject(self) -> URIRef | BNode | None
+subject: URIRef | BNode | None = Field(default=None, exclude=True)
 ```
 
-The RDF subject this instance was read from, or `None` if constructed directly.
+The RDF subject this instance was read from, or `None` if constructed directly. Excluded from `model_dump()` and JSON Schema output. Survives `model_copy()`.
 
 ### Methods
 
@@ -120,10 +119,11 @@ def from_endpoint(
     subject: URIRef,
     *,
     max_depth: int | None = None,
+    timeout: float = 30.0,
 ) -> Self
 ```
 
-Read a node from a remote SPARQL endpoint. Generates a CONSTRUCT query, executes it via HTTP POST, and parses the result with `from_graph`.
+Read a node from a remote SPARQL endpoint. Generates a CONSTRUCT query, executes it via HTTP POST, and parses the result with `from_graph`. Only `http` and `https` endpoints are accepted. Raises `EndpointError` on HTTP failures or malformed responses.
 
 ---
 
@@ -209,6 +209,26 @@ Extract the first `SHConstraint` from a `typing.Annotated` type. Returns `None` 
 
 ---
 
+## `LangStr`
+
+```python
+class LangStr(str):
+    language: str | None
+
+    def __new__(cls, value: str = "", language: str | None = None) -> LangStr
+```
+
+A string subclass that preserves an optional BCP 47 language tag. Use as a field type when language-tagged RDF literals must survive read → write round-trips. Behaves identically to `str` for all normal operations.
+
+```python
+class LabelView(GraphModel):
+    label: LangStr = predicate(SCHEMA["name"])
+```
+
+With `str`, `Literal("Bonjour", lang="fr")` round-trips to `Literal("Bonjour", datatype=xsd:string)` — the tag is lost. With `LangStr`, it round-trips to `Literal("Bonjour", lang="fr")`.
+
+---
+
 ## SPARQL utilities
 
 ### `model_to_construct`
@@ -217,7 +237,7 @@ Extract the first `SHConstraint` from a `typing.Annotated` type. Returns `None` 
 def model_to_construct(model_cls: type, subject_var: str = "s") -> str
 ```
 
-Generate a SPARQL CONSTRUCT query from a `GraphModel` subclass. Called internally by `GraphModel.sparql_construct()`.
+Generate a SPARQL CONSTRUCT query from a `GraphModel` subclass. Recursively includes triple patterns for nested `GraphModel` fields. Called internally by `GraphModel.sparql_construct()`.
 
 ### `model_to_construct_for_subject`
 
@@ -237,7 +257,7 @@ Generate a CONSTRUCT query bound to a specific subject IRI. Used by `from_endpoi
 def model_to_shacl(model_cls: type, shape_uri: URIRef | None = None) -> Graph
 ```
 
-Generate a SHACL NodeShape graph. Called internally by `GraphModel.to_shacl()`. Respects `SHConstraint` overrides from `Annotated` types.
+Generate a SHACL NodeShape graph. Recursively generates shapes for nested `GraphModel` fields. Called internally by `GraphModel.to_shacl()`. Respects `SHConstraint` overrides from `Annotated` types.
 
 ---
 

@@ -35,9 +35,11 @@ rdfantic delegates all validation to Pydantic. The type system maps naturally:
 
 | Python type | RDF semantics |
 |-------------|--------------|
-| `str` | Required, single-valued literal |
+| `str` | Required, single-valued literal (language tag lost on round-trip) |
+| `LangStr` | Required, single-valued literal with language tag preserved |
 | `int \| None` | Optional, single-valued literal |
 | `set[str]` | Multi-valued literals (0 or more) |
+| `URIRef` | Object property (preserved as IRI, not converted to string) |
 | `NestedModel` | Object property (follows the link) |
 | `NestedModel \| None` | Optional object property |
 

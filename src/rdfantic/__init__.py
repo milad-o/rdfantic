@@ -11,11 +11,13 @@ from rdfantic.exceptions import (
 from rdfantic.fields import predicate
 from rdfantic.model import GraphModel
 from rdfantic.pagination import Page, paginate
+from rdfantic.types import LangStr
 
 __all__ = [
     "EndpointError",
     "GraphModel",
     "GraphReadError",
+    "LangStr",
     "Page",
     "RdfanticError",
     "SHConstraint",

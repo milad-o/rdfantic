@@ -38,20 +38,52 @@ def model_to_construct_for_subject(model_cls: type, subject: URIRef) -> str:
 def _build_construct(model_cls: type, subject_term: str) -> str:
     """Build a SPARQL CONSTRUCT query with the given subject term.
 
+    Recursively includes triple patterns for nested GraphModel fields.
+
     Args:
         model_cls: A GraphModel subclass.
         subject_term: Either a SPARQL variable (``?s``) or a bound IRI (``<...>``).
     """
-    hints = get_type_hints(model_cls)
-    rdf_type = getattr(model_cls, "rdf_type", None)
-
     construct_patterns: list[str] = []
     required_patterns: list[str] = []
     optional_patterns: list[str] = []
 
+    _collect_patterns(
+        model_cls,
+        subject_term,
+        construct_patterns,
+        required_patterns,
+        optional_patterns,
+        _visited=set(),
+    )
+
+    construct_block = "\n".join(construct_patterns)
+    where_lines = required_patterns + optional_patterns
+    where_block = "\n".join(where_lines)
+
+    return f"CONSTRUCT {{\n{construct_block}\n}} WHERE {{\n{where_block}\n}}"
+
+
+def _collect_patterns(
+    model_cls: type,
+    subject_term: str,
+    construct_patterns: list[str],
+    required_patterns: list[str],
+    optional_patterns: list[str],
+    *,
+    _visited: set[type],
+) -> None:
+    """Collect SPARQL patterns for a model, recursing into nested GraphModels."""
+    from rdfantic.model import GraphModel
+
+    if model_cls in _visited:
+        return
+    _visited.add(model_cls)
+
+    hints = get_type_hints(model_cls)
+    rdf_type = getattr(model_cls, "rdf_type", None)
     s = subject_term
 
-    # rdf:type pattern
     if rdf_type is not None:
         type_uri = _sparql_uri(rdf_type)
         construct_patterns.append(f"  {s} a {type_uri} .")
@@ -63,7 +95,8 @@ def _build_construct(model_cls: type, subject_term: str) -> str:
             continue
 
         annotation = hints[field_name]
-        _, is_optional, is_multi = unwrap_type(annotation)
+        inner_type, is_optional, is_multi = unwrap_type(annotation)
+        is_nested = isinstance(inner_type, type) and issubclass(inner_type, GraphModel)
 
         pred_uri = _sparql_uri(pred)
         var = f"?{field_name}"
@@ -76,14 +109,29 @@ def _build_construct(model_cls: type, subject_term: str) -> str:
         else:
             required_patterns.append(pattern)
 
-    # Build query
-    construct_block = "\n".join(construct_patterns)
-    where_lines = required_patterns + optional_patterns
-    where_block = "\n".join(where_lines)
-
-    return f"CONSTRUCT {{\n{construct_block}\n}} WHERE {{\n{where_block}\n}}"
+        if is_nested:
+            _collect_patterns(
+                inner_type,
+                var,
+                construct_patterns,
+                required_patterns,
+                optional_patterns,
+                _visited=_visited,
+            )
 
 
 def _sparql_uri(uri: URIRef) -> str:
-    """Format a URI for SPARQL (full IRI in angle brackets)."""
-    return f"<{uri}>"
+    """Format a URI for SPARQL (full IRI in angle brackets).
+
+    Raises:
+        ValueError: If the URI contains characters illegal in a SPARQL IRI
+            reference (``<``, ``>``, ``{``, ``}``, ``|``, ``\\``, ``^``,
+            backtick, or whitespace).
+    """
+    _ILLEGAL = set("<>{}|\\^`")
+    uri_str = str(uri)
+    bad = _ILLEGAL.intersection(uri_str)
+    if bad or any(c.isspace() for c in uri_str):
+        msg = f"URI contains characters illegal in SPARQL IRI: {uri_str!r}"
+        raise ValueError(msg)
+    return f"<{uri_str}>"
