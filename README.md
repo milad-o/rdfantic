@@ -12,8 +12,12 @@ One model definition gives you:
 
 - **Read** — `from_graph()` extracts matching triples into a validated Pydantic object
 - **Write** — `to_triples()` / `to_graph()` serializes back with proper XSD datatypes
+- **Update** — `merge_into_graph()` replaces declared predicates while preserving the rest
+- **Delete** — `remove_from_graph()` removes only model-declared predicates from a node
 - **SHACL** — `to_shacl()` generates a SHACL NodeShape for graph validation
 - **SPARQL** — `sparql_construct()` generates a CONSTRUCT query for the model's shape
+- **Remote** — `from_endpoint()` queries a remote SPARQL endpoint directly
+- **Pagination** — `Page[Model]` wraps paginated graph reads for REST APIs
 
 ## Install
 
@@ -21,7 +25,7 @@ One model definition gives you:
 pip install rdfantic
 ```
 
-Or with SHACL validation support:
+With SHACL validation support:
 
 ```bash
 pip install rdfantic[shacl]
@@ -50,25 +54,122 @@ class MovieView(GraphModel):
     director: PersonView = predicate(SCHEMA["director"])
     genres: set[str] = predicate(SCHEMA["genre"])
     year: int | None = predicate(SCHEMA["year"])
+```
 
+### Read from a graph
 
-# Read from a graph
+```python
 g = Graph().parse("movies.ttl")
 movie = MovieView.from_graph(g, EX["inception"])
 
-print(movie.name)            # "Inception"
-print(movie.genres)          # {"Sci-Fi", "Thriller"}
-print(movie.director.name)   # "Christopher Nolan"
+movie.name            # "Inception"
+movie.genres          # {"Sci-Fi", "Thriller"}
+movie.director.name   # "Christopher Nolan"
+```
 
-# Write back to triples
+### Write back
+
+```python
 for triple in movie.to_triples(subject=EX["inception"]):
     g.add(triple)
 
-# Generate SHACL shape
-shacl_graph = MovieView.to_shacl()
+# or add to a graph directly
+movie.to_graph(g, subject=EX["inception"])
+```
 
-# Generate SPARQL CONSTRUCT
+### Update and delete
+
+`merge_into_graph` replaces the predicates declared by the model while leaving other triples on the node untouched:
+
+```python
+updated = MovieView(name="Inception (2010)", genres={"Sci-Fi"}, director=director, year=2010)
+updated.merge_into_graph(g, subject=EX["inception"])
+```
+
+`remove_from_graph` deletes only the model-declared predicates:
+
+```python
+MovieView.remove_from_graph(g, subject=EX["inception"])
+```
+
+### Depth control
+
+Nested models are traversed recursively by default. Use `max_depth` to bound traversal:
+
+```python
+# depth 0 — skip nested models entirely (set to None)
+movie = MovieView.from_graph(g, EX["inception"], max_depth=0)
+movie.director  # None
+
+# depth 1 — resolve one level of nesting
+movie = MovieView.from_graph(g, EX["inception"], max_depth=1)
+movie.director.name  # "Christopher Nolan"
+```
+
+### SHACL validation
+
+Generate a SHACL NodeShape directly from the model:
+
+```python
+shacl_graph = MovieView.to_shacl()
+```
+
+Use `SHConstraint` with `Annotated` types for fine-grained SHACL metadata:
+
+```python
+from typing import Annotated
+from rdflib import XSD
+from rdfantic import SHConstraint
+
+class StrictMovie(GraphModel):
+    rdf_type = SCHEMA["Movie"]
+    name: Annotated[str, SHConstraint(min_length=1, max_length=200)] = predicate(SCHEMA["name"])
+    year: Annotated[int, SHConstraint(
+        datatype=XSD.nonNegativeInteger,
+        min_inclusive=1888,
+    )] = predicate(SCHEMA["year"])
+```
+
+### SPARQL query generation
+
+```python
 query = MovieView.sparql_construct()
+# Returns a CONSTRUCT query matching the model's shape
+```
+
+### Remote SPARQL endpoints
+
+Query a node directly from a SPARQL endpoint without a local graph:
+
+```python
+movie = MovieView.from_endpoint("https://dbpedia.org/sparql", EX["inception"])
+```
+
+### Pagination
+
+`Page[Model]` provides a generic paginated response, designed for use with FastAPI or any Pydantic-consuming framework:
+
+```python
+from rdfantic import Page, paginate
+
+page = paginate(MovieView, g, offset=0, limit=10)
+page.items   # list[MovieView] — current page
+page.total   # int — total matching subjects
+page.offset  # int
+page.limit   # int
+```
+
+In a FastAPI app:
+
+```python
+from fastapi import FastAPI
+from rdfantic import Page, paginate
+
+app = FastAPI()
+
+@app.get("/movies", response_model=Page[MovieView])
+def list_movies(offset: int = 0, limit: int = 10):
+    return paginate(MovieView, graph, offset=offset, limit=limit)
 ```
 
 ## Key design choices
@@ -77,6 +178,7 @@ query = MovieView.sparql_construct()
 - **Pydantic-native**: `int | None` means optional. `set[str]` means multi-valued. Validation happens through Pydantic's standard machinery.
 - **rdflib-first**: Works directly with rdflib `Graph` objects. No special store required.
 - **Nested models**: A field typed as another `GraphModel` subclass follows the object link and recursively reads the target node.
+- **Open-world safe**: Models declare what they care about. Predicates outside the model are never touched by reads, updates, or deletes.
 
 ## License
 
