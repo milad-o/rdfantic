@@ -1,6 +1,6 @@
 [project]
 name = "rdfantic"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Pydantic views for RDF graphs — read, write, validate, and query graph data with typed Python models"
 readme = "README.md"
 license = "MIT"
@@ -34,6 +34,9 @@ Issues = "https://github.com/milad-o/rdfantic/issues"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/rdfantic/_version.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/rdfantic"]

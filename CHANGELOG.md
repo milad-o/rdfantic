@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] — 2026-04-27
+
+### Added
+
+- Getting-started guide, SHACL reference, FastAPI integration, design doc, and API reference
+- Runnable example scripts for all main features
+- Live 4-step LLM extraction pipeline in `llm_bridge` example
+
+### Changed
+
+- Bump minimum Python to 3.14
+- Convert example scripts from `.py` to Jupyter notebooks with stored outputs
+- Add `ipykernel` to dev dependencies
+- Switch to dynamic versioning (hatchling reads `_version.py`)
+
+### Fixed
+
+- Use static Python version badge in README
+
 ## [0.1.0] — 2026-04-27
 
 ### Added
