@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] — 2026-04-27
+
+### Added
+
+- Exception hierarchy: `RdfanticError`, `GraphReadError`, `SubjectNotFoundError`, `EndpointError`
+- `timeout` parameter on `from_endpoint()` (default 30s)
+- Endpoint URL scheme validation (http/https only)
+- Testing guide at `docs/testing.md`
+
+### Changed
+
+- `subject` is now a proper Pydantic field (`Field(exclude=True)`) instead of a private `_subject` attribute — survives `model_copy()` and round-trips
+- SPARQL subject binding uses direct generation instead of brittle string replacement
+- HTTP errors from `from_endpoint()` are now wrapped in `EndpointError`
+
+### Removed
+
+- `bind_namespace()` — it wrapped `Namespace()` and silently ignored the prefix argument
+- `namespace` ClassVar on `GraphModel` — was declared but never used by any logic
+
 ## [0.1.3] — 2026-04-27
 
 ### Added
@@ -61,6 +81,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Clean JSON Schema output for LLM extraction pipelines (no RDF metadata leaks)
 - CI workflow (lint + test) and release workflow (PyPI via OIDC trusted publisher)
 
+[0.2.0]: https://github.com/milad-o/rdfantic/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/milad-o/rdfantic/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/milad-o/rdfantic/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/milad-o/rdfantic/compare/v0.1.0...v0.1.1
