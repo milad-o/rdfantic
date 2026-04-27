@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.3] — 2026-04-27
+
+### Added
+
+- Circular reference tests — self-referencing models, direct/indirect data cycles, depth-limited termination
+- Endpoint edge case tests — empty results, HTTP 404/500, connection errors, malformed responses
+- Wider competitor survey — evaluated PydanticRDF (Omegaice/pydantic-rdf) and updated gap analysis
+
 ## [0.1.2] — 2026-04-27
 
 ### Added
@@ -53,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Clean JSON Schema output for LLM extraction pipelines (no RDF metadata leaks)
 - CI workflow (lint + test) and release workflow (PyPI via OIDC trusted publisher)
 
+[0.1.3]: https://github.com/milad-o/rdfantic/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/milad-o/rdfantic/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/milad-o/rdfantic/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/milad-o/rdfantic/releases/tag/v0.1.0
