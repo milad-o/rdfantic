@@ -6,18 +6,6 @@
 
 **Pydantic views for RDF graphs.** Define a model once — get read, write, SHACL validation, SPARQL generation, and LLM-ready JSON Schema. No glue code.
 
-```mermaid
-flowchart LR
-    M["GraphModel<br/><code>predicate()</code> fields"]
-    M --> R["<b>Read</b><br/>from_graph()"]
-    M --> W["<b>Write</b><br/>to_triples()"]
-    M --> S["<b>SHACL</b><br/>to_shacl()"]
-    M --> Q["<b>SPARQL</b><br/>sparql_construct()"]
-    M --> L["<b>LLM Schema</b><br/>model_json_schema()"]
-    M --> U["<b>Update</b><br/>merge_into_graph()"]
-    style M fill:#e1f5ff,stroke:#0066cc,stroke-width:3px
-```
-
 ```python
 from rdfantic import GraphModel, predicate
 from rdflib import Namespace
