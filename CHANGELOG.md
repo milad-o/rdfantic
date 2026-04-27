@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] — 2026-04-27
+
+### Changed
+
+- Lower minimum Python from 3.14 to 3.12 — opens the package to 3.12 and 3.13 users
+- Remove Mermaid diagram from README (redundant with tagline)
+- Add PydanticRDF to comparison table
+
 ## [0.2.0] — 2026-04-27
 
 ### Added
@@ -81,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Clean JSON Schema output for LLM extraction pipelines (no RDF metadata leaks)
 - CI workflow (lint + test) and release workflow (PyPI via OIDC trusted publisher)
 
+[0.2.1]: https://github.com/milad-o/rdfantic/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/milad-o/rdfantic/compare/v0.1.3...v0.2.0
 [0.1.3]: https://github.com/milad-o/rdfantic/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/milad-o/rdfantic/compare/v0.1.1...v0.1.2
