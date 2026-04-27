@@ -48,6 +48,12 @@ def paginate(
     Finds all subjects matching the model's ``rdf_type`` and returns
     a ``Page`` containing the requested slice.
 
+    .. note::
+
+        All matching subjects are collected into a sorted list before slicing.
+        This is fine for small-to-medium graphs but will use proportional memory
+        on very large ones.
+
     Args:
         model_cls: A GraphModel subclass.
         graph: The rdflib Graph to query.

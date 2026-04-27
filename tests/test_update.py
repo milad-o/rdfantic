@@ -73,7 +73,7 @@ class TestMergeIntoGraph:
 
         carol = PersonView.from_graph(g, EX["carol"])
         updated = PersonView(name="Carol New", age=None)
-        updated._subject = carol.subject
+        updated.subject = carol.subject
         updated.merge_into_graph(g)
 
         names = list(g.objects(EX["carol"], SCHEMA["name"]))

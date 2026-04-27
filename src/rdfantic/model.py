@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, ClassVar, Self, get_type_hints
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from rdflib import RDF, BNode, Graph, Namespace, URIRef
 from rdflib.term import Identifier
 
@@ -27,7 +27,6 @@ class GraphModel(BaseModel):
     Class attributes set via ``model_config``:
 
     * ``rdf_type``: The ``rdf:type`` URI for nodes this view matches.
-    * ``namespace``: Default namespace for subject IRIs.
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -35,12 +34,11 @@ class GraphModel(BaseModel):
     rdf_type: ClassVar[URIRef | None] = None
     namespace: ClassVar[Namespace | None] = None
 
-    _subject: URIRef | BNode | None = None
-
-    @property
-    def subject(self) -> URIRef | BNode | None:
-        """The RDF subject this instance was read from, or None."""
-        return self._subject
+    subject: URIRef | BNode | None = Field(
+        default=None,
+        exclude=True,
+        description="The RDF subject this instance was read from, or None.",
+    )
 
     # ------------------------------------------------------------------
     # Read: graph → Python
@@ -129,7 +127,7 @@ class GraphModel(BaseModel):
             # else: missing required field — Pydantic validation will raise
 
         instance = cls.model_validate(field_values)
-        instance._subject = subject
+        instance.subject = subject
         return instance
 
     # ------------------------------------------------------------------
@@ -149,7 +147,7 @@ class GraphModel(BaseModel):
         Returns:
             A list of (subject, predicate, object) triples.
         """
-        subj = subject or self._subject or BNode()
+        subj = subject or self.subject or BNode()
         hints = get_type_hints(type(self), include_extras=True)
         triples: list[tuple[Identifier, URIRef, Identifier]] = []
 
@@ -248,7 +246,7 @@ class GraphModel(BaseModel):
         Returns:
             The updated graph.
         """
-        subj = subject or self._subject
+        subj = subject or self.subject
         if subj is None:
             msg = "merge_into_graph requires a subject"
             raise ValueError(msg)
@@ -342,6 +340,7 @@ class GraphModel(BaseModel):
         subject: URIRef,
         *,
         max_depth: int | None = None,
+        timeout: float = 30.0,
     ) -> Self:
         """Read a node from a remote SPARQL endpoint.
 
@@ -352,6 +351,7 @@ class GraphModel(BaseModel):
             endpoint: The SPARQL endpoint URL.
             subject: The subject node to retrieve.
             max_depth: Maximum nesting depth (forwarded to ``from_graph``).
+            timeout: HTTP request timeout in seconds. Defaults to 30.
 
         Returns:
             A validated instance of this model.
@@ -361,7 +361,7 @@ class GraphModel(BaseModel):
         query = model_to_construct_for_subject(cls, subject)
         result_graph = Graph()
         result_graph.parse(
-            data=_sparql_query(endpoint, query),
+            data=_sparql_query(endpoint, query, timeout=timeout),
             format="xml",
         )
         return cls.from_graph(result_graph, subject, max_depth=max_depth)
@@ -395,13 +395,24 @@ def _collection_origin(annotation: Any) -> type | None:
     return None
 
 
-def _sparql_query(endpoint: str, query: str) -> bytes:
+def _sparql_query(endpoint: str, query: str, *, timeout: float = 30.0) -> bytes:
     """Execute a SPARQL query against a remote endpoint via HTTP.
 
     Uses urllib to avoid adding httpx/requests as a required dependency.
+
+    Args:
+        endpoint: The SPARQL endpoint URL.
+        query: The SPARQL query string.
+        timeout: HTTP request timeout in seconds.
+
+    Raises:
+        EndpointError: If the request fails (HTTP error, timeout, connection refused).
     """
+    from urllib.error import URLError
     from urllib.parse import urlencode
     from urllib.request import Request, urlopen
+
+    from rdfantic.exceptions import EndpointError
 
     data = urlencode({"query": query}).encode()
     req = Request(
@@ -410,5 +421,9 @@ def _sparql_query(endpoint: str, query: str) -> bytes:
         headers={"Accept": "application/rdf+xml"},
         method="POST",
     )
-    with urlopen(req) as resp:
-        return resp.read()
+    try:
+        with urlopen(req, timeout=timeout) as resp:
+            return resp.read()
+    except URLError as exc:
+        msg = f"SPARQL endpoint request failed: {exc}"
+        raise EndpointError(msg) from exc

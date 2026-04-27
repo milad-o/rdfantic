@@ -14,7 +14,7 @@ import pytest
 from pydantic import ValidationError
 from rdflib import XSD, Graph, Literal, Namespace
 
-from rdfantic import GraphModel, predicate
+from rdfantic import EndpointError, GraphModel, predicate
 
 SCHEMA = Namespace("http://schema.org/")
 EX = Namespace("http://example.org/")
@@ -72,7 +72,7 @@ class TestEndpointHTTPErrors:
                     "http://example.org/sparql", 404, "Not Found", {}, None
                 ),
             ),
-            pytest.raises(HTTPError),
+            pytest.raises(EndpointError),
         ):
             PersonView.from_endpoint("http://example.org/sparql", EX["alice"])
 
@@ -88,7 +88,7 @@ class TestEndpointHTTPErrors:
                     None,
                 ),
             ),
-            pytest.raises(HTTPError),
+            pytest.raises(EndpointError),
         ):
             PersonView.from_endpoint("http://example.org/sparql", EX["alice"])
 
@@ -98,7 +98,7 @@ class TestEndpointHTTPErrors:
                 "urllib.request.urlopen",
                 side_effect=URLError("Connection refused"),
             ),
-            pytest.raises(URLError),
+            pytest.raises(EndpointError),
         ):
             PersonView.from_endpoint("http://localhost:9999/sparql", EX["alice"])
 

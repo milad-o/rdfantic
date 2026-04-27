@@ -11,7 +11,6 @@ Base class for typed RDF graph views. Subclass this and declare fields with `pre
 | Variable | Type | Description |
 |----------|------|-------------|
 | `rdf_type` | `ClassVar[URIRef \| None]` | The `rdf:type` for matching/writing nodes. Optional. |
-| `namespace` | `ClassVar[Namespace \| None]` | Default namespace for subject IRIs. Optional. |
 
 ### Properties
 
@@ -210,16 +209,6 @@ Extract the first `SHConstraint` from a `typing.Annotated` type. Returns `None` 
 
 ---
 
-## `bind_namespace`
-
-```python
-def bind_namespace(prefix: str, uri: str | URIRef) -> Namespace
-```
-
-Create an rdflib `Namespace`. Convenience wrapper so users don't need to import from rdflib directly.
-
----
-
 ## SPARQL utilities
 
 ### `model_to_construct`
@@ -292,3 +281,16 @@ def rdf_value_to_python(node: Node, py_type: type) -> Any
 ```
 
 Convert an rdflib term to a Python value.
+
+---
+
+## Exceptions
+
+All exceptions inherit from `RdfanticError`, which inherits from `Exception`.
+
+| Exception | Parent | When raised |
+|-----------|--------|-------------|
+| `RdfanticError` | `Exception` | Base class for all rdfantic errors. |
+| `GraphReadError` | `RdfanticError` | Reading from a graph fails for structural reasons. |
+| `SubjectNotFoundError` | `GraphReadError` | No triples match the requested subject. |
+| `EndpointError` | `RdfanticError` | Remote SPARQL endpoint request fails (HTTP error, timeout, connection refused). |
