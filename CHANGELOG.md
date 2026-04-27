@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] — 2026-04-27
+
+### Added
+
+- Multi-view stress tests — 3+ views on same node with interleaved read/write
+- Round-trip fidelity tests for every supported type (str, int, float, bool, set, list, Optional, nested)
+- SHACL integration tests — generated shapes validate own output, reject bad data
+- Error-path tests — missing required fields, empty graphs, wrong subjects
+- Bulk benchmark tests — 1k node read/write/round-trip
+
 ## [0.1.1] — 2026-04-27
 
 ### Added
@@ -42,3 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `Page[Model]` and `paginate()` — generic paginated response for REST APIs
 - Clean JSON Schema output for LLM extraction pipelines (no RDF metadata leaks)
 - CI workflow (lint + test) and release workflow (PyPI via OIDC trusted publisher)
+
+[0.1.2]: https://github.com/milad-o/rdfantic/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/milad-o/rdfantic/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/milad-o/rdfantic/releases/tag/v0.1.0
