@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, ClassVar, Self, get_type_hints
 
 from pydantic import BaseModel, ConfigDict, Field
-from rdflib import RDF, BNode, Graph, Namespace, URIRef
+from rdflib import RDF, BNode, Graph, URIRef
 from rdflib.term import Identifier
 
 from rdfantic.constraints import get_sh_constraints
@@ -32,7 +32,6 @@ class GraphModel(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     rdf_type: ClassVar[URIRef | None] = None
-    namespace: ClassVar[Namespace | None] = None
 
     subject: URIRef | BNode | None = Field(
         default=None,
@@ -138,14 +137,20 @@ class GraphModel(BaseModel):
         self,
         subject: URIRef | BNode | None = None,
     ) -> list[tuple[Identifier, URIRef, Identifier]]:
-        """Serialize this instance to a list of RDF triples.
+        """Serialize this instance to a flat list of RDF triples.
+
+        Nested models are serialized recursively and their triples are
+        appended to the same list.  A linking triple connects the parent
+        subject to the nested subject.  Use ``to_graph()`` if you only
+        need the resulting graph and don't need to inspect individual triples.
 
         Args:
             subject: The subject IRI to use. Falls back to the subject
                 this instance was read from, or generates a blank node.
 
         Returns:
-            A list of (subject, predicate, object) triples.
+            A flat list of (subject, predicate, object) triples, including
+            triples from nested models.
         """
         subj = subject or self.subject or BNode()
         hints = get_type_hints(type(self), include_extras=True)
@@ -406,13 +411,18 @@ def _sparql_query(endpoint: str, query: str, *, timeout: float = 30.0) -> bytes:
         timeout: HTTP request timeout in seconds.
 
     Raises:
-        EndpointError: If the request fails (HTTP error, timeout, connection refused).
+        EndpointError: If the URL is invalid or the request fails.
     """
     from urllib.error import URLError
-    from urllib.parse import urlencode
+    from urllib.parse import urlencode, urlparse
     from urllib.request import Request, urlopen
 
     from rdfantic.exceptions import EndpointError
+
+    parsed = urlparse(endpoint)
+    if parsed.scheme not in ("http", "https"):
+        msg = f"Endpoint URL must use http or https scheme, got {parsed.scheme!r}"
+        raise EndpointError(msg)
 
     data = urlencode({"query": query}).encode()
     req = Request(

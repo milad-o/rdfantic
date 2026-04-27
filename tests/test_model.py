@@ -15,14 +15,12 @@ EX = Namespace("http://example.org/")
 
 class PersonView(GraphModel):
     rdf_type = SCHEMA["Person"]
-    namespace = EX
 
     name: str = predicate(SCHEMA["name"])
 
 
 class MovieView(GraphModel):
     rdf_type = SCHEMA["Movie"]
-    namespace = EX
 
     name: str = predicate(SCHEMA["name"])
     director: PersonView = predicate(SCHEMA["director"])

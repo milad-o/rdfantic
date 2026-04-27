@@ -23,6 +23,25 @@ def model_to_construct(model_cls: type, subject_var: str = "s") -> str:
     Returns:
         A SPARQL CONSTRUCT query string.
     """
+    return _build_construct(model_cls, subject_term=f"?{subject_var}")
+
+
+def model_to_construct_for_subject(model_cls: type, subject: URIRef) -> str:
+    """Generate a CONSTRUCT query bound to a specific subject IRI.
+
+    Like ``model_to_construct`` but uses a concrete IRI instead of a variable,
+    suitable for querying a remote endpoint for one node.
+    """
+    return _build_construct(model_cls, subject_term=_sparql_uri(subject))
+
+
+def _build_construct(model_cls: type, subject_term: str) -> str:
+    """Build a SPARQL CONSTRUCT query with the given subject term.
+
+    Args:
+        model_cls: A GraphModel subclass.
+        subject_term: Either a SPARQL variable (``?s``) or a bound IRI (``<...>``).
+    """
     hints = get_type_hints(model_cls)
     rdf_type = getattr(model_cls, "rdf_type", None)
 
@@ -30,7 +49,7 @@ def model_to_construct(model_cls: type, subject_var: str = "s") -> str:
     required_patterns: list[str] = []
     optional_patterns: list[str] = []
 
-    s = f"?{subject_var}"
+    s = subject_term
 
     # rdf:type pattern
     if rdf_type is not None:
@@ -63,16 +82,6 @@ def model_to_construct(model_cls: type, subject_var: str = "s") -> str:
     where_block = "\n".join(where_lines)
 
     return f"CONSTRUCT {{\n{construct_block}\n}} WHERE {{\n{where_block}\n}}"
-
-
-def model_to_construct_for_subject(model_cls: type, subject: URIRef) -> str:
-    """Generate a CONSTRUCT query bound to a specific subject IRI.
-
-    Like ``model_to_construct`` but replaces the variable with a concrete
-    IRI, suitable for querying a remote endpoint for one node.
-    """
-    query = model_to_construct(model_cls, subject_var="s")
-    return query.replace("?s ", f"{_sparql_uri(subject)} ")
 
 
 def _sparql_uri(uri: URIRef) -> str:

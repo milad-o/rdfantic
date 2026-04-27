@@ -109,7 +109,10 @@ def python_value_to_rdf(
 def rdf_value_to_python(node: Node, py_type: type) -> Any:
     """Convert an rdflib term to a Python value.
 
-    For Literals, uses rdflib's toPython(). For URIRefs, returns the string URI.
+    For Literals, uses rdflib's ``toPython()``.  For URIRefs, returns the
+    string URI.  BNodes are stringified to their identifier — this is
+    intentional for scalar fields; nested GraphModel fields are resolved
+    by ``from_graph`` before this function is called.
     """
     if isinstance(node, Literal):
         return node.toPython()
