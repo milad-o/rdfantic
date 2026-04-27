@@ -1,7 +1,7 @@
 # rdfantic
 
 [![PyPI](https://img.shields.io/pypi/v/rdfantic)](https://pypi.org/project/rdfantic/)
-[![Python](https://img.shields.io/pypi/pyversions/rdfantic)](https://pypi.org/project/rdfantic/)
+[![Python](https://img.shields.io/badge/python-3.14%2B-blue)](https://pypi.org/project/rdfantic/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **Pydantic views for RDF graphs.** Define a model once — get read, write, SHACL validation, SPARQL generation, and LLM-ready JSON Schema. No glue code.
