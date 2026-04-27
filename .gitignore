@@ -9,6 +9,20 @@ wheels/
 # Virtual environments
 .venv
 
+# Tool caches
+.ruff_cache/
+.pytest_cache/
+.mypy_cache/
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# macOS
+.DS_Store
+
 # Copilot files
 .github/instructions/
 .github/copilot-instructions.md

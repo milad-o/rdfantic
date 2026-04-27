@@ -172,6 +172,14 @@ def list_movies(offset: int = 0, limit: int = 10):
     return paginate(MovieView, graph, offset=offset, limit=limit)
 ```
 
+## Documentation
+
+- [Getting Started](docs/getting-started.md) — models, reading, writing, and all main features
+- [SHACL Constraints](docs/shacl.md) — fine-grained SHACL metadata with `SHConstraint`
+- [FastAPI Integration](docs/fastapi.md) — `Page[Model]` for REST APIs
+- [Design](docs/design.md) — architecture and trade-offs
+- [API Reference](docs/api.md) — complete method signatures
+
 ## Key design choices
 
 - **View semantics**: Extra triples on a node are silently ignored. Two different `GraphModel` subclasses can read the same node with different projections.
