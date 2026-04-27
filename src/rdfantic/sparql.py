@@ -65,6 +65,16 @@ def model_to_construct(model_cls: type, subject_var: str = "s") -> str:
     return f"CONSTRUCT {{\n{construct_block}\n}} WHERE {{\n{where_block}\n}}"
 
 
+def model_to_construct_for_subject(model_cls: type, subject: URIRef) -> str:
+    """Generate a CONSTRUCT query bound to a specific subject IRI.
+
+    Like ``model_to_construct`` but replaces the variable with a concrete
+    IRI, suitable for querying a remote endpoint for one node.
+    """
+    query = model_to_construct(model_cls, subject_var="s")
+    return query.replace("?s ", f"{_sparql_uri(subject)} ")
+
+
 def _sparql_uri(uri: URIRef) -> str:
     """Format a URI for SPARQL (full IRI in angle brackets)."""
     return f"<{uri}>"
