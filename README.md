@@ -73,7 +73,7 @@ from pyshacl import validate
 conforms, _, _ = validate(g, shacl_graph=PersonView.to_shacl())
 ```
 
-This pipeline currently takes 3-4 separate tools and custom glue. rdfantic collapses it to one model definition. See the [live example](examples/llm_bridge.py).
+This pipeline currently takes 3-4 separate tools and custom glue. rdfantic collapses it to one model definition. See the [live example](examples/llm_bridge.ipynb).
 
 ## Install
 
@@ -160,14 +160,14 @@ def list_movies(offset: int = 0, limit: int = 10):
 
 ## Examples
 
-Runnable scripts in [`examples/`](examples/):
+Notebooks in [`examples/`](examples/) (outputs included):
 
-- [basic_read_write.py](examples/basic_read_write.py) — define models, build graph, read, write, round-trip
-- [update_delete.py](examples/update_delete.py) — open-world-safe update and delete
-- [shacl_validation.py](examples/shacl_validation.py) — generate shapes, validate with pyshacl
-- [multi_view.py](examples/multi_view.py) — two models reading the same node
-- [pagination.py](examples/pagination.py) — `Page[Model]` with `paginate()`
-- [llm_bridge.py](examples/llm_bridge.py) — live LLM extraction pipeline (OpenAI)
+- [basic_read_write.ipynb](examples/basic_read_write.ipynb) — define models, build graph, read, write, round-trip
+- [update_delete.ipynb](examples/update_delete.ipynb) — open-world-safe update and delete
+- [shacl_validation.ipynb](examples/shacl_validation.ipynb) — generate shapes, validate with pyshacl
+- [multi_view.ipynb](examples/multi_view.ipynb) — two models reading the same node
+- [pagination.ipynb](examples/pagination.ipynb) — `Page[Model]` with `paginate()`
+- [llm_bridge.ipynb](examples/llm_bridge.ipynb) — live LLM extraction pipeline (OpenAI)
 
 ## Documentation
 
